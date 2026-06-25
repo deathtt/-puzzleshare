@@ -514,7 +514,7 @@ body::before{
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
           Twitter / X
         </button>
-      <button class="btn" onclick="shareInstagram()">
+       <button class="btn" onclick="shareInstagram()">
           <svg viewBox="0 0 24 24" fill="none" stroke="url(#ig-grad)" stroke-width="2" aria-hidden="true">
             <defs><linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="25%" stop-color="#e6683c"/><stop offset="50%" stop-color="#dc2743"/><stop offset="75%" stop-color="#cc2366"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs>
             <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="url(#ig-grad)" stroke="none"/>
@@ -612,18 +612,23 @@ let isFriendMode = false;
 // ── Init: check for shared puzzle in URL ───────────────────────────
 window.addEventListener('load', () => {
   const hash = location.hash.slice(1);
-  if (hash) {
-    try {
-      const data = JSON.parse(decodeURIComponent(atob(hash)));
-      imgSrc = data.img;
-      grid = data.grid || 3;
-      puzzleTitle = data.title || 'Puzzle';
-      isFriendMode = true;
-      initSolve(true);
-      showScreen('s-solve');
-    } catch(e) {
-      console.warn('Bad share link', e);
+  if (!hash) return;
+  try {
+    // New format: #puzzle/KEY/DATA
+    let encoded = hash;
+    if (hash.startsWith('puzzle/')) {
+      const parts = hash.split('/');
+      encoded = parts.slice(2).join('/');
     }
+    const data = JSON.parse(decodeURIComponent(atob(encoded)));
+    imgSrc = data.img;
+    grid = data.grid || 3;
+    puzzleTitle = data.title || 'Puzzle';
+    isFriendMode = true;
+    initSolve(true);
+    showScreen('s-solve');
+  } catch(e) {
+    console.warn('Bad share link', e);
   }
 });
 
@@ -868,8 +873,7 @@ function shareInstagram() {
   }).catch(() => {
     toast('Copy this link and paste in Instagram: ' + url);
   });
-
-
+}
 function playPuzzle() {
   isFriendMode = false;
   initSolve(false);
