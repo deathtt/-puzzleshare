@@ -640,7 +640,20 @@ let moveCount = 0, startTime = null, timerInt = null;
 let isFriendMode = false;
 
 // ── Init: check for shared puzzle in URL ───────────────────────────
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  // Check for short link: /p/abc123
+  const pathMatch = location.pathname.match(/\/p\/([a-z0-9]+)/i);
+  if (pathMatch) {
+    try {
+      const res = await fetch(`/api/load?id=${pathMatch[1]}`);
+      const data = await res.json();
+      imgSrc = data.img; grid = data.grid || 3; puzzleTitle = data.title || 'Puzzle';
+      isFriendMode = true; initSolve(true); showScreen('s-solve');
+    } catch(e) { console.warn('Could not load puzzle', e); }
+    return;
+  }
+
+  // Fallback: old base64 hash links
   const hash = location.hash.slice(1);
   if (!hash) return;
   try {
@@ -661,38 +674,7 @@ window.addEventListener('load', () => {
     console.warn('Bad share link', e);
   }
 });
-  // 2. After /p/ redirect — load from sessionStorage
-  const stored = sessionStorage.getItem('loadPuzzle');
-  if (stored) {
-    sessionStorage.removeItem('loadPuzzle');
-    try {
-      const data = JSON.parse(stored);
-      imgSrc = data.img;
-      grid = data.grid || 3;
-      puzzleTitle = data.title || 'Puzzle';
-      isFriendMode = true;
-      initSolve(true);
-      showScreen('s-solve');
-      return;
-    } catch(e) { console.warn('Session load failed', e); }
-  }
 
-  // 3. Fallback: base64 hash
-  const hash = location.hash.slice(1);
-  if (!hash) return;
-  try {
-    const data = JSON.parse(decodeURIComponent(atob(hash)));
-    imgSrc = data.img;
-    grid = data.grid || 3;
-    puzzleTitle = data.title || 'Puzzle';
-    isFriendMode = true;
-    initSolve(true);
-    showScreen('s-solve');
-  } catch(e) {
-    console.warn('Bad share link', e);
-  }
-
-});
   // Fallback: old base64 hash links
   // Load from sessionStorage (set by /p/ redirect)
   const stored = sessionStorage.getItem('loadPuzzle');
