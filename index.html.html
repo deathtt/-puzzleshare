@@ -12,6 +12,18 @@
     --text:#2D2D2D;
     --blue:#3D69C2;
     --blue-light:#7FA7FF;
+    --accent:#7c6ef7;
+    --accent2:#a599ff;
+  
+    --surface2:rgba(255,255,255,0.4);
+    
+    --text3:#9ca3af;
+    --success:#16a34a;
+    
+    --radius:12px;
+    --radius-sm:8px;
+    --radius-lg:18px;
+
 }
 
 .brand{
@@ -225,7 +237,25 @@ body::before{
     font-size: 13px; color: var(--text2); display: flex; gap: 8px; align-items: flex-start;
   }
   .hint-box svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; color: var(--accent2); }
-  .action-row { display: flex; gap: 10px; margin-top: 24px; }
+  .action-row {
+    display: flex; gap: 10px;
+    position: sticky; bottom: 0; z-index: 50;
+    background: var(--bg);
+    padding: 14px 0 18px;
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .action-row .btn-primary {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border-color: var(--accent) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  .action-row .btn-primary:hover {
+    background: #6b5de8 !important;
+    border-color: #6b5de8 !important;
+  }
 
   /* ── Share ── */
   .share-card {
@@ -835,17 +865,44 @@ function applyCustomGrid(val) {
 }
 
 // ── Create puzzle ──────────────────────────────────────────────────
-function createPuzzle() {
+async function createPuzzle() {
   puzzleTitle = document.getElementById('puzzle-title').value.trim() || 'Can you solve this? 🧩';
-  const payload = { img: imgSrc, grid, title: puzzleTitle };
-  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
-  const url = location.href.split('#')[0] + '#' + encoded;
-  document.getElementById('share-url').value = url;
-  document.getElementById('share-subtitle').textContent =
-    `"${puzzleTitle}" · ${grid}×${grid} grid · ${grid*grid} pieces`;
-  showScreen('s-share');
-}
 
+  const btn = document.querySelector('.action-row .btn-primary');
+  btn.textContent = '⏳ Creating...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ img: imgSrc, grid, title: puzzleTitle }),
+    });
+
+    const json = await res.json();
+
+    if (!json.id) throw new Error('No ID returned');
+
+    const base = location.origin;
+    const shareUrl = `${base}/p/${json.id}`;
+    document.getElementById('share-url').value = shareUrl;
+    document.getElementById('share-subtitle').textContent =
+      `"${puzzleTitle}" · ${grid}×${grid} grid · ${grid*grid} pieces`;
+    showScreen('s-share');
+
+  } catch (err) {
+    // Fallback to base64 URL if API fails
+    const encoded = btoa(encodeURIComponent(JSON.stringify({ img: imgSrc, grid, title: puzzleTitle })));
+    const url = location.href.split('#')[0] + '#' + encoded;
+    document.getElementById('share-url').value = url;
+    document.getElementById('share-subtitle').textContent =
+      `"${puzzleTitle}" · ${grid}×${grid} grid · ${grid*grid} pieces`;
+    showScreen('s-share');
+  } finally {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg> Create puzzle &amp; share link`;
+    btn.disabled = false;
+  }
+}
 function copyLink() {
   const url = document.getElementById('share-url').value;
   navigator.clipboard.writeText(url).then(() => {
