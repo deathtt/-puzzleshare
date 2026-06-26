@@ -1,31 +1,26 @@
-export const config = { runtime: 'edge' };
-
-export default async function handler(req) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
-  if (!id) return new Response('Missing id', { status: 400 });
+export default async function handler(req, res) {
+  const { id } = req.query;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
 
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    const res = await fetch(
-      `https://blob.vercel-storage.com/puzzles/${id}.json`,
-      {
-        headers: { 'authorization': `Bearer ${token}` }
-      }
-    );
-    if (!res.ok) return new Response('Puzzle not found', { status: 404 });
-    const text = await res.text();
-    return new Response(text, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+    const { list } = await import('@vercel/blob');
+    const { blobs } = await list({ 
+      prefix: `puzzles/${id}`,
+      token: process.env.BLOB_READ_WRITE_TOKEN
     });
+
+    if (!blobs.length) {
+      return res.status(404).send('Puzzle not found');
+    }
+
+    const response = await fetch(blobs[0].url);
+    const text = await response.text();
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(200).send(text);
+
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    res.status(500).json({ error: err.message });
   }
 }
