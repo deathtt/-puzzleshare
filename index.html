@@ -642,7 +642,7 @@ let isFriendMode = false;
 // ── Init: check for shared puzzle in URL ───────────────────────────
 window.addEventListener('load', async () => {
 
-  // 1. Check for /p/shortid in URL path
+  // 1. Short link /p/id
   const pathMatch = location.pathname.match(/\/p\/([a-z0-9]+)/i);
   if (pathMatch) {
     try {
@@ -660,7 +660,7 @@ window.addEventListener('load', async () => {
     return;
   }
 
-  // 2. Check sessionStorage after /p/ redirect
+  // 2. After /p/ redirect — load from sessionStorage
   const stored = sessionStorage.getItem('loadPuzzle');
   if (stored) {
     sessionStorage.removeItem('loadPuzzle');
