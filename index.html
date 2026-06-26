@@ -642,11 +642,11 @@ let isFriendMode = false;
 // ── Init: check for shared puzzle in URL ───────────────────────────
 window.addEventListener('load', async () => {
 
-  // Check for /p/shortid link
+  // 1. Check for /p/shortid in URL path
   const pathMatch = location.pathname.match(/\/p\/([a-z0-9]+)/i);
   if (pathMatch) {
     try {
-      document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:16px;color:#666">Loading puzzle...</div>';
+      document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:16px;color:#555">Loading puzzle...</div>';
       const res = await fetch(`/api/load?id=${pathMatch[1]}`);
       if (!res.ok) throw new Error('not found');
       const data = await res.json();
@@ -655,12 +655,12 @@ window.addEventListener('load', async () => {
       }));
       location.replace('/');
     } catch(e) {
-      document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:18px;color:red">Puzzle not found 😔<br><a href="/" style="color:blue;margin-top:12px;display:block">Go home</a></div>';
+      document.body.innerHTML = '<div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:18px;color:red">Puzzle not found 😔<br><a href="/" style="color:blue;margin-top:12px;display:block;font-size:14px">← Go home</a></div>';
     }
     return;
   }
 
-  // Check sessionStorage (after /p/ redirect)
+  // 2. Check sessionStorage after /p/ redirect
   const stored = sessionStorage.getItem('loadPuzzle');
   if (stored) {
     sessionStorage.removeItem('loadPuzzle');
@@ -676,7 +676,7 @@ window.addEventListener('load', async () => {
     } catch(e) { console.warn('Session load failed', e); }
   }
 
-  // Check base64 hash fallback
+  // 3. Fallback: base64 hash
   const hash = location.hash.slice(1);
   if (!hash) return;
   try {
@@ -692,7 +692,6 @@ window.addEventListener('load', async () => {
   }
 
 });
-
   // Fallback: old base64 hash links
   // Load from sessionStorage (set by /p/ redirect)
   const stored = sessionStorage.getItem('loadPuzzle');
