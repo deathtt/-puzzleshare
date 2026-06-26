@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/save", "destination": "/api/save" },
+    { "source": "/api/load", "destination": "/api/load" },
+    { "source": "/p/:id", "destination": "/index.html" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
